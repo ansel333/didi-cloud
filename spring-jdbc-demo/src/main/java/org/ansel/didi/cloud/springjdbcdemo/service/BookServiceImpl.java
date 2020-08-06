@@ -1,13 +1,13 @@
 package org.ansel.didi.cloud.springjdbcdemo.service;
 
-import com.alibaba.druid.pool.DruidDataSource;
-import lombok.extern.log4j.Log4j2;
-import org.ansel.didi.cloud.springjdbcdemo.config.MySqlDataSource;
+import lombok.extern.log4j.Log4j;
+import org.ansel.didi.cloud.springjdbcdemo.config.DruidDbConfig;
 import org.ansel.didi.cloud.springjdbcdemo.constants.BookSqlConstants;
 import org.ansel.didi.cloud.springjdbcdemo.model.Book;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
@@ -15,22 +15,20 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Service
-@Log4j2
+@Log4j
 public class BookServiceImpl implements BookService {
 
-    private MySqlDataSource mysqlDataSource;
+    private DataSource mysqlDataSource;
 
     @Autowired
-    public BookServiceImpl(MySqlDataSource dataSource) {
-        this.mysqlDataSource = dataSource;
+    public BookServiceImpl(DruidDbConfig dbConfig) {
+        this.mysqlDataSource = dbConfig.dataSource();
     }
 
     @Override
     public boolean addBook(Book book) {
-        DruidDataSource dataSource = mysqlDataSource.dataSource();
-
         try {
-            Connection connection = dataSource.getConnection();
+            Connection connection = mysqlDataSource.getConnection();
             PreparedStatement preparedStatement;
             LocalDateTime currentTime = LocalDateTime.now();
             preparedStatement = connection.prepareStatement(BookSqlConstants.SQL_INSERT_BOOK);
@@ -43,6 +41,7 @@ public class BookServiceImpl implements BookService {
 
             return preparedStatement.execute();
         } catch (Throwable e) {
+            // TODO: config log4j properly
             log.error("Error occurs: {0}", e);
             return false;
         }
